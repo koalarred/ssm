@@ -35,19 +35,28 @@ apply plugin: 'war'
 group 'com.guoqing'
 version '1.0-SNAPSHOT'
 
-apply plugin: 'java'
-apply plugin: 'war'
+webAppDirName = "src/main/webapp"
+def packageName = "springMvc"
 
+war.archiveName="springMvc.war"
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
 }
+//processResources.dependsOn('copyConfigureFile')
+processResources{
+    from('src/main/java') {
+        include '**/*.xml'
+    }
+}
 
+[compileJava, compileTestJava]*.options.collect { options ->
+    options.encoding = 'UTF-8'
+}
 configurations {
     mybatisGenerator
 }
-
 // 读取config文件夹中对应的配置文件
 ext{
     def prop = new Properties();
@@ -88,7 +97,18 @@ dependencies {
     mybatisGenerator 'mysql:mysql-connector-java:5.1.38'
 }
 
+
+war.doLast {
+    copy {
+        from("build/libs/springMvc.war")
+        into("build")
+        rename {
+            fileName -> "${packageName}.war"
+        }
+    }
+}
 // 利用ant创建一个自动生成MyBatis目录文件的task
+/****   第一次需要，之后就不用了，会覆盖添加的spring注解
 task mybatisGenerate  {
     ant.properties['targetProject'] = projectDir.path
     ant.properties['jarDirection'] = project['jdbc.jarDirection']
@@ -108,7 +128,7 @@ task mybatisGenerate  {
             classpath: configurations.mybatisGenerator.asPath
     )
 
-    ant.mbgenerator(overwrite: true,
+    ant.mbgenerator(overwrite: false,
             configfile: 'src/main/resources/config/mybatis/generatorConfig.xml',
             verbose: true) {
         propertyset {
@@ -126,3 +146,4 @@ task mybatisGenerate  {
         }
     }
 }
+****/
